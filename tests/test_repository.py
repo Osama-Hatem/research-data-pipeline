@@ -144,3 +144,58 @@ def test_duplicate_paper_is_not_inserted_twice():
 
 
     connection.close()
+    
+def test_author_without_openalex_id_is_skipped():
+
+    connection = get_connection(":memory:")
+
+    create_tables(connection)
+
+
+    paper = {
+
+        "openalex_id": "W999",
+
+        "title": "Paper With Incomplete Author",
+
+        "publication_date": "2025-01-01",
+
+        "citations": 0,
+
+        "doi": None,
+
+        "primary_url": None,
+
+        "search_query": "engineering",
+
+        "authors": [
+
+            {
+                "openalex_id": None,
+
+                "name": "Unknown Author",
+
+                "position": 0
+            }
+        ]
+    }
+
+
+    save_paper(
+        paper,
+        connection
+    )
+
+
+    author_count = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM authors
+        """
+    ).fetchone()[0]
+
+
+    assert author_count == 0
+
+
+    connection.close()

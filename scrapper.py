@@ -2,6 +2,8 @@ import sys
 
 from api.openalex import get_papers
 from processing.normalizer import normalize_paper
+from database.connection import get_connection
+from database.schema import create_tables
 from database.repository import save_paper
 
 
@@ -18,6 +20,13 @@ def main():
 
 
     search_term = sys.argv[1]
+
+
+    connection = get_connection()
+
+    create_tables(
+        connection
+    )
 
 
     raw_papers = get_papers(
@@ -39,8 +48,12 @@ def main():
 
 
         save_paper(
-            normalized_paper
+            normalized_paper,
+            connection
         )
+
+
+    connection.close()
 
 
     print(

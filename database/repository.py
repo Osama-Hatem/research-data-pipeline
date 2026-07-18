@@ -25,21 +25,26 @@ def save_paper(paper, connection):
             paper["citations"],
             paper["doi"],
             paper["primary_url"],
-            paper["search_query"]
-        )
-        )
+            paper["search_query"],
+        ),
+    )
 
-    paper_id = cursor.execute(
+    paper_row = cursor.execute(
         """
         SELECT id
         FROM papers
         WHERE openalex_id = ?
         """,
-        (paper["openalex_id"],)
-    ).fetchone()[0]
+        (paper["openalex_id"],),
+    ).fetchone()
 
+    paper_id = paper_row[0]
 
     for author in paper["authors"]:
+
+        if not author["openalex_id"]:
+
+            continue
 
         cursor.execute(
             """
@@ -51,20 +56,20 @@ def save_paper(paper, connection):
             """,
             (
                 author["openalex_id"],
-                author["name"]
-            )
+                author["name"],
+            ),
         )
 
-
-        author_id = cursor.execute(
+        author_row = cursor.execute(
             """
             SELECT id
             FROM authors
             WHERE openalex_id = ?
             """,
-            (author["openalex_id"],)
-        ).fetchone()[0]
+            (author["openalex_id"],),
+        ).fetchone()
 
+        author_id = author_row[0]
 
         cursor.execute(
             """
@@ -78,6 +83,9 @@ def save_paper(paper, connection):
             (
                 paper_id,
                 author_id,
-                author["position"]
-            )
+                author["position"],
+            ),
         )
+        
+
+    connection.commit()
