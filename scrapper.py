@@ -11,7 +11,70 @@ from config.logging_config import configure_logging
 
 configure_logging()
 
+
 logger = logging.getLogger(__name__)
+
+
+def process_papers(
+    raw_papers,
+    search_term,
+    connection
+):
+
+    processed_count = 0
+    skipped_count = 0
+    failed_count = 0
+
+
+    for raw_paper in raw_papers:
+
+        try:
+
+            normalized_paper = normalize_paper(
+                raw_paper,
+                search_term
+            )
+
+
+            if not normalized_paper["openalex_id"]:
+
+                logger.warning(
+                    "Skipping paper with missing OpenAlex ID"
+                )
+
+
+                skipped_count += 1
+
+                continue
+
+
+            save_paper(
+                normalized_paper,
+                connection
+            )
+
+
+            processed_count += 1
+
+
+        except Exception:
+
+            failed_count += 1
+
+
+            logger.exception(
+                "Failed to process a paper"
+            )
+
+
+            continue
+
+
+    return (
+        processed_count,
+        skipped_count,
+        failed_count
+    )
 
 
 def main():
@@ -36,79 +99,49 @@ def main():
 
     connection = get_connection()
 
-    create_tables(
-        connection
-    )
+
+    try:
+
+        create_tables(
+            connection
+        )
 
 
-    raw_papers = get_papers(
-        search_term
-    )
+        raw_papers = get_papers(
+            search_term
+        )
 
 
-    logger.info(
-        "Fetched %d papers",
-        len(raw_papers)
-    )
+        logger.info(
+            "Fetched %d papers",
+            len(raw_papers)
+        )
 
 
-    processed_count = 0
-    skipped_count = 0
-    failed_count = 0
+        (
+            processed_count,
+            skipped_count,
+            failed_count
+        ) = process_papers(
+            raw_papers,
+            search_term,
+            connection
+        )
 
 
-    for raw_paper in raw_papers:
-
-        try:
-
-            normalized_paper = normalize_paper(
-                raw_paper,
-                search_term
-            )
-
-
-            if not normalized_paper["openalex_id"]:
-
-                logger.warning(
-                    "Skipping paper with missing OpenAlex ID"
-                )
-
-                skipped_count += 1
-
-                continue
+        logger.info(
+            "Collection complete: "
+            "fetched=%d processed=%d skipped=%d failed=%d",
+            len(raw_papers),
+            processed_count,
+            skipped_count,
+            failed_count
+        )
 
 
-            save_paper(
-                normalized_paper,
-                connection
-            )
+    finally:
 
-
-            processed_count += 1
-
-
-        except Exception:
-
-            failed_count += 1
-
-            logger.exception(
-                "Failed to process a paper"
-            )
-
-            continue
-
-
-    connection.close()
-
-
-    logger.info(
-    "Collection complete: "
-    "fetched=%d processed=%d skipped=%d failed=%d",
-    len(raw_papers),
-    processed_count,
-    skipped_count,
-    failed_count
-    )
+        connection.close()
 
 
 if __name__ == "__main__":
