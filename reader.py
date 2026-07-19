@@ -1,0 +1,228 @@
+import argparse
+
+from database.connection import get_connection
+from database.reader import (
+    search_papers,
+    get_authors_for_paper
+)
+
+
+def print_paper(
+    connection,
+    paper
+):
+
+    paper_id = paper[0]
+
+    openalex_id = paper[1]
+
+    title = paper[2]
+
+    publication_date = paper[3]
+
+    citations = paper[4]
+
+    doi = paper[5]
+
+    primary_url = paper[6]
+
+    search_query = paper[7]
+
+
+    authors = get_authors_for_paper(
+        connection,
+        paper_id
+    )
+
+
+    print()
+
+    print(
+        "Title:",
+        title
+    )
+
+    print(
+        "OpenAlex ID:",
+        openalex_id
+    )
+
+    print(
+        "Date:",
+        publication_date
+    )
+
+    print(
+        "Citations:",
+        citations
+    )
+
+    print(
+        "DOI:",
+        doi
+    )
+
+    print(
+        "URL:",
+        primary_url
+    )
+
+    print(
+        "Collected from search:",
+        search_query
+    )
+
+
+    print(
+        "Authors:"
+    )
+
+
+    if not authors:
+
+        print(
+            "  No authors found"
+        )
+
+    else:
+
+        for author in authors:
+
+            name = author[0]
+
+            position = author[1]
+
+
+            print(
+                f"  {position + 1}. {name}"
+            )
+
+
+    print(
+        "--------------------"
+    )
+
+def positive_integer(
+    value
+):
+
+    value = int(
+        value
+    )
+
+
+    if value <= 0:
+
+        raise argparse.ArgumentTypeError(
+            "limit must be greater than zero"
+        )
+
+
+    return value
+
+def create_parser():
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Search collected research papers"
+        )
+    )
+
+
+    parser.add_argument(
+        "search_term",
+        nargs="+",
+        help=(
+            "Term to search for in "
+            "paper titles, authors, "
+            "or search queries"
+        )
+    )
+
+
+    parser.add_argument(
+        "--limit",
+        type=positive_integer,
+        default=10,
+        help=(
+            "Maximum number of papers "
+            "to display (default: 10)"
+        )
+    )
+
+
+    parser.add_argument(
+        "--sort",
+        choices=[
+            "citations",
+            "date",
+            "title"
+        ],
+        default="citations",
+        help=(
+            "Sort results by citations, "
+            "date, or title "
+            "(default: citations)"
+        )
+    )
+
+
+    return parser
+
+
+def main():
+
+    parser = create_parser()
+
+
+    args = parser.parse_args()
+
+
+    search_term = " ".join(
+        args.search_term
+    )
+
+
+    connection = get_connection()
+
+
+    try:
+
+        papers = search_papers(
+        connection,
+        search_term,
+        args.limit,
+        args.sort
+        )
+
+
+        if not papers:
+
+            print(
+                "No papers found."
+            )
+
+            return
+
+
+        print(
+            f"Found {len(papers)} paper(s)"
+        )
+
+
+        for paper in papers:
+
+            print_paper(
+                connection,
+                paper
+            )
+
+
+    finally:
+
+        connection.close()
+
+
+if __name__ == "__main__":
+
+    main()

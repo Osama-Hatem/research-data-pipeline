@@ -1,6 +1,6 @@
-import scrapper
+import collection.service
 
-from scrapper import process_papers
+from collection.service import process_papers
 
 
 def test_process_papers_continues_after_one_failure(
@@ -60,14 +60,14 @@ def test_process_papers_continues_after_one_failure(
 
 
     monkeypatch.setattr(
-        scrapper,
+        collection.service,
         "normalize_paper",
         fake_normalize_paper
     )
 
 
     monkeypatch.setattr(
-        scrapper,
+        collection.service,
         "save_paper",
         fake_save_paper
     )
@@ -84,4 +84,78 @@ def test_process_papers_continues_after_one_failure(
         2,
         0,
         1
+    )
+
+def test_process_papers_skips_paper_without_openalex_id(
+    monkeypatch
+):
+
+    raw_papers = [
+
+        {"id": "paper-1"}
+
+    ]
+
+
+    def fake_normalize_paper(
+        raw_paper,
+        search_term
+    ):
+
+        return {
+
+            "openalex_id": None,
+
+            "title": "Paper Without ID",
+
+            "publication_date": "2025-01-01",
+
+            "citations": 0,
+
+            "doi": None,
+
+            "primary_url": None,
+
+            "search_query": search_term,
+
+            "authors": []
+
+        }
+
+
+    def fake_save_paper(
+        paper,
+        connection
+    ):
+
+        raise AssertionError(
+            "save_paper should not be called"
+        )
+
+
+    monkeypatch.setattr(
+        collection.service,
+        "normalize_paper",
+        fake_normalize_paper
+    )
+
+
+    monkeypatch.setattr(
+        collection.service,
+        "save_paper",
+        fake_save_paper
+    )
+
+
+    result = process_papers(
+        raw_papers,
+        "engineering",
+        None
+    )
+
+
+    assert result == (
+        0,
+        1,
+        0
     )
