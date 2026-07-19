@@ -144,7 +144,7 @@ def test_duplicate_paper_is_not_inserted_twice():
 
 
     connection.close()
-    
+
 def test_author_without_openalex_id_is_skipped():
 
     connection = get_connection(":memory:")
@@ -196,6 +196,87 @@ def test_author_without_openalex_id_is_skipped():
 
 
     assert author_count == 0
+
+
+    connection.close()
+
+def test_save_paper_rolls_back_when_database_operation_fails():
+
+    connection = get_connection(":memory:")
+
+    create_tables(connection)
+
+
+    connection.execute(
+        """
+        CREATE TRIGGER fail_author_insert
+        BEFORE INSERT ON authors
+        BEGIN
+            SELECT RAISE(
+                ABORT,
+                'Intentional test failure'
+            );
+        END;
+        """
+    )
+
+
+    paper = {
+
+        "openalex_id": "W-ROLLBACK",
+
+        "title": "Rollback Test",
+
+        "publication_date": "2025-01-01",
+
+        "citations": 0,
+
+        "doi": None,
+
+        "primary_url": None,
+
+        "search_query": "engineering",
+
+        "authors": [
+
+            {
+
+                "openalex_id": "A-ROLLBACK",
+
+                "name": "Test Author",
+
+                "position": 0
+
+            }
+
+        ]
+
+    }
+
+
+    try:
+
+        save_paper(
+            paper,
+            connection
+        )
+
+    except Exception:
+
+        pass
+
+
+    saved_paper = connection.execute(
+        """
+        SELECT *
+        FROM papers
+        WHERE openalex_id = ?
+        """,
+        ("W-ROLLBACK",)
+    ).fetchone()
+
+
+    assert saved_paper is None
 
 
     connection.close()
