@@ -35,7 +35,7 @@ def test_search_papers_finds_paper_by_title():
 
         "authors": []
 
-    }
+        }
 
 
     save_paper(

@@ -1,7 +1,12 @@
 import requests
-
 from api.openalex import get_papers
-
+from database.connection import get_connection
+from database.schema import create_tables
+from database.reader import (
+    get_database_statistics
+)
+from database.repository import save_paper
+from database.reader import get_recent_papers, get_papers_for_author, search_authors, get_top_cited_papers
 
 def test_get_papers_returns_results(
     monkeypatch
@@ -327,3 +332,349 @@ def test_get_papers_retries_connection_error(
 
 
     assert len(attempts) == 3
+
+def test_get_database_statistics():
+
+    connection = get_connection(
+        ":memory:"
+    )
+
+    create_tables(
+        connection
+    )
+
+    statistics = get_database_statistics(
+        connection
+    )
+
+    assert statistics["papers"] == 0
+
+    assert statistics["authors"] == 0
+
+    assert statistics["relationships"] == 0
+
+    assert statistics["average_citations"] == 0
+
+    connection.close()
+
+def test_get_recent_papers():
+
+    connection = get_connection(
+        ":memory:"
+    )
+
+
+    create_tables(
+        connection
+    )
+
+
+    paper_one = {
+
+        "openalex_id": "W1",
+
+        "title": "Older Paper",
+
+        "publication_date": "2025-01-01",
+
+        "citations": 10,
+
+        "doi": None,
+
+        "primary_url": None,
+
+        "search_query": "engineering",
+
+        "authors": []
+
+    }
+
+
+    paper_two = {
+
+        "openalex_id": "W2",
+
+        "title": "Newer Paper",
+
+        "publication_date": "2026-01-01",
+
+        "citations": 20,
+
+        "doi": None,
+
+        "primary_url": None,
+
+        "search_query": "engineering",
+
+        "authors": []
+
+    }
+
+
+    save_paper(
+        paper_one,
+        connection
+    )
+
+
+    save_paper(
+        paper_two,
+        connection
+    )
+
+
+    recent = get_recent_papers(
+        connection,
+        2
+    )
+
+
+    assert len(
+        recent
+    ) == 2
+
+
+    connection.close()
+
+def test_search_authors():
+
+    connection = get_connection(
+        ":memory:"
+    )
+
+
+    create_tables(
+        connection
+    )
+
+
+    connection.execute(
+        """
+        INSERT INTO authors (
+            openalex_id,
+            name
+        )
+        VALUES (?, ?)
+        """,
+        (
+            "A123",
+            "Ada Lovelace"
+        )
+    )
+
+
+    connection.commit()
+
+
+    authors = search_authors(
+        connection,
+        "Ada",
+        10
+    )
+
+
+    assert len(
+        authors
+    ) == 1
+
+
+    assert authors[0][2] == (
+        "Ada Lovelace"
+    )
+
+
+    connection.close()
+
+def test_get_papers_for_author():
+
+    connection = get_connection(
+        ":memory:"
+    )
+
+
+    create_tables(
+        connection
+    )
+
+
+    paper = {
+
+        "openalex_id": "W123",
+
+        "title": "Research Paper",
+
+        "publication_date": "2025-01-01",
+
+        "citations": 42,
+
+        "doi": None,
+
+        "primary_url": None,
+
+        "search_query": "engineering",
+
+        "authors": [
+
+            {
+
+                "openalex_id": "A123",
+
+                "name": "Ada Lovelace",
+
+                "position": 0
+
+            }
+
+        ]
+
+    }
+
+
+    save_paper(
+        paper,
+        connection
+    )
+
+
+    author = connection.execute(
+        """
+        SELECT id
+        FROM authors
+        WHERE openalex_id = ?
+        """,
+        (
+            "A123",
+        )
+    ).fetchone()
+
+
+    papers = get_papers_for_author(
+        connection,
+        author[0]
+    )
+
+
+    assert len(
+        papers
+    ) == 1
+
+
+    assert papers[0][2] == (
+        "Research Paper"
+    )
+
+
+    connection.close()
+
+def test_get_top_cited_papers():
+
+    connection = get_connection(
+        ":memory:"
+    )
+
+
+    create_tables(
+        connection
+    )
+
+
+    papers = [
+
+        {
+
+            "openalex_id": "W1",
+
+            "title": "Low Citation Paper",
+
+            "publication_date": "2025-01-01",
+
+            "citations": 10,
+
+            "doi": None,
+
+            "primary_url": None,
+
+            "search_query": "engineering",
+
+            "authors": []
+
+        },
+
+        {
+
+            "openalex_id": "W2",
+
+            "title": "High Citation Paper",
+
+            "publication_date": "2025-01-01",
+
+            "citations": 100,
+
+            "doi": None,
+
+            "primary_url": None,
+
+            "search_query": "engineering",
+
+            "authors": []
+
+        },
+
+        {
+
+            "openalex_id": "W3",
+
+            "title": "Medium Citation Paper",
+
+            "publication_date": "2025-01-01",
+
+            "citations": 50,
+
+            "doi": None,
+
+            "primary_url": None,
+
+            "search_query": "engineering",
+
+            "authors": []
+
+        }
+
+    ]
+
+
+    for paper in papers:
+
+        save_paper(
+            paper,
+            connection
+        )
+
+
+    result = get_top_cited_papers(
+        connection,
+        3
+    )
+
+
+    assert len(
+        result
+    ) == 3
+
+
+    assert result[0][2] == (
+        "High Citation Paper"
+    )
+
+
+    assert result[1][2] == (
+        "Medium Citation Paper"
+    )
+
+
+    assert result[2][2] == (
+        "Low Citation Paper"
+    )
+
+
+    connection.close()

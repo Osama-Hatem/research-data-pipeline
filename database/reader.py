@@ -1,7 +1,9 @@
+from config.settings import DEFAULT_SEARCH_LIMIT
+
 def search_papers(
     connection,
     search_term,
-    limit=10,
+    limit=DEFAULT_SEARCH_LIMIT,
     sort_by="citations"
 ):
 
@@ -84,6 +86,126 @@ def search_papers(
 
     return cursor.fetchall()
 
+def get_database_statistics(
+    connection
+):
+
+    paper_count = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM papers
+        """
+    ).fetchone()[0]
+
+
+    author_count = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM authors
+        """
+    ).fetchone()[0]
+
+
+    relationship_count = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM paper_authors
+        """
+    ).fetchone()[0]
+
+
+    average_citations = connection.execute(
+        """
+        SELECT AVG(citations)
+        FROM papers
+        """
+    ).fetchone()[0]
+
+
+    return {
+
+        "papers": paper_count,
+
+        "authors": author_count,
+
+        "relationships":
+        relationship_count,
+
+        "average_citations":
+        average_citations or 0
+
+    }
+
+def get_recent_papers(
+    connection,
+    limit=DEFAULT_SEARCH_LIMIT
+):
+
+    return connection.execute(
+        """
+        SELECT
+            id,
+            openalex_id,
+            title,
+            publication_date,
+            citations,
+            doi,
+            primary_url,
+            search_query,
+            collected_at
+        FROM papers
+        ORDER BY collected_at DESC, id DESC
+        LIMIT ?
+        """,
+        (limit,)
+    ).fetchall()
+
+def search_authors(
+    connection,
+    search_term,
+    limit=DEFAULT_SEARCH_LIMIT
+):
+
+    return connection.execute(
+        """
+        SELECT
+            id,
+            openalex_id,
+            name
+        FROM authors
+        WHERE name LIKE ?
+        ORDER BY name
+        LIMIT ?
+        """,
+        (
+            f"%{search_term}%",
+            limit
+        )
+    ).fetchall()
+
+def get_papers_for_author(
+    connection,
+    author_id
+):
+
+    return connection.execute(
+        """
+        SELECT
+            papers.id,
+            papers.openalex_id,
+            papers.title,
+            papers.publication_date,
+            papers.citations
+        FROM papers
+        JOIN paper_authors
+            ON papers.id = paper_authors.paper_id
+        WHERE paper_authors.author_id = ?
+        ORDER BY papers.citations DESC
+        """,
+        (
+            author_id,
+        )
+    ).fetchall()
 
 def get_authors_for_paper(
     connection,
@@ -109,3 +231,27 @@ def get_authors_for_paper(
 
 
     return cursor.fetchall()
+
+def get_top_cited_papers(
+    connection,
+    limit=DEFAULT_SEARCH_LIMIT
+):
+
+    return connection.execute(
+        """
+        SELECT
+            id,
+            openalex_id,
+            title,
+            publication_date,
+            citations,
+            doi,
+            primary_url,
+            search_query
+        FROM papers
+        ORDER BY citations DESC, id ASC
+        LIMIT ?
+        """,
+        (limit,)
+    ).fetchall()
+
