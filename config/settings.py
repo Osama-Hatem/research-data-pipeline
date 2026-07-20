@@ -1,0 +1,21 @@
+DATABASE_PATH = "research.db"
+
+
+OPENALEX_API_URL = (
+    "https://api.openalex.org/works"
+)
+
+
+OPENALEX_TIMEOUT = 10
+
+
+OPENALEX_PER_PAGE = 25
+
+
+OPENALEX_MAX_RETRIES = 3
+
+
+OPENALEX_RETRY_DELAY = 1
+
+
+DEFAULT_SEARCH_LIMIT = 10

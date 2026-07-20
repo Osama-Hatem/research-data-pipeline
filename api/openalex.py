@@ -1,75 +1,85 @@
+import time
+
 import requests
 
-from tenacity import retry
-from tenacity import retry_if_exception
-from tenacity import stop_after_attempt
-from tenacity import wait_exponential
-
-
-def should_retry(error):
-
-    if isinstance(
-        error,
-        requests.Timeout
-    ):
-
-        return True
-
-
-    if isinstance(
-        error,
-        requests.ConnectionError
-    ):
-
-        return True
-
-
-    if isinstance(
-        error,
-        requests.HTTPError
-    ):
-
-        status_code = (
-            error.response.status_code
-        )
-
-
-        return status_code in {
-            429,
-            500,
-            502,
-            503,
-            504
-        }
-
-
-    return False
-
-
-@retry(
-    retry=retry_if_exception(
-        should_retry
-    ),
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(
-        multiplier=1,
-        min=1,
-        max=10
-    )
+from config.settings import (
+    OPENALEX_API_URL,
+    OPENALEX_TIMEOUT,
+    OPENALEX_PER_PAGE,
+    OPENALEX_MAX_RETRIES,
+    OPENALEX_RETRY_DELAY
 )
-def get_papers(search_term):
 
-    response = requests.get(
-        "https://api.openalex.org/works",
-        params={
-            "search": search_term,
-            "per-page": 25
-        },
-        timeout=10
-    )
 
-    response.raise_for_status()
+def get_papers(
+    search_term
+):
 
-    data = response.json()
+    for attempt in range(
+        OPENALEX_MAX_RETRIES
+    ):
 
-    return data["results"]
+        try:
+
+            response = requests.get(
+                OPENALEX_API_URL,
+                params={
+                    "search": search_term,
+                    "per-page": (
+                        OPENALEX_PER_PAGE
+                    )
+                },
+                timeout=OPENALEX_TIMEOUT
+            )
+
+
+            response.raise_for_status()
+
+
+            data = response.json()
+
+
+            return data["results"]
+
+
+        except requests.HTTPError as error:
+
+            status_code = (
+                error.response.status_code
+            )
+
+
+            if status_code < 500:
+
+                raise
+
+
+            if (
+                attempt
+                == OPENALEX_MAX_RETRIES - 1
+            ):
+
+                raise
+
+
+            time.sleep(
+                OPENALEX_RETRY_DELAY
+            )
+
+
+        except (
+            requests.ConnectionError,
+            requests.Timeout
+        ):
+
+            if (
+                attempt
+                == OPENALEX_MAX_RETRIES - 1
+            ):
+
+                raise
+
+
+            time.sleep(
+                OPENALEX_RETRY_DELAY
+            )

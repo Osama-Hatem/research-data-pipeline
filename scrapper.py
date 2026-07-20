@@ -14,25 +14,9 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 
-def main():
-
-    if len(sys.argv) < 2:
-
-        logger.error(
-            "Usage: python scrapper.py <search term>"
-        )
-
-        return
-
-
-    search_term = sys.argv[1]
-
-
-    logger.info(
-        "Starting collection for '%s'",
-        search_term
-    )
-
+def collect_papers(
+    search_term
+):
 
     connection = get_connection()
 
@@ -49,36 +33,68 @@ def main():
         )
 
 
-        logger.info(
-            "Fetched %d papers",
-            len(raw_papers)
-        )
-
-
-        (
-            processed_count,
-            skipped_count,
-            failed_count
-        ) = process_papers(
+        result = process_papers(
             raw_papers,
             search_term,
             connection
         )
 
 
-        logger.info(
-            "Collection complete: "
-            "fetched=%d processed=%d skipped=%d failed=%d",
-            len(raw_papers),
-            processed_count,
-            skipped_count,
-            failed_count
-        )
+        return {
+
+            "fetched": len(raw_papers),
+
+            "processed": result[
+                0
+            ],
+
+            "skipped": result[
+                1
+            ],
+
+            "failed": result[
+                2
+            ]
+
+        }
 
 
     finally:
 
         connection.close()
+
+
+def main():
+
+    if len(sys.argv) < 2:
+
+        logger.error(
+            "Usage: "
+            "python scrapper.py <search term>"
+        )
+
+        return
+
+
+    search_term = " ".join(
+        sys.argv[1:]
+    )
+
+
+    result = collect_papers(
+        search_term
+    )
+
+
+    logger.info(
+        "Collection complete: "
+        "fetched=%d processed=%d "
+        "skipped=%d failed=%d",
+        result["fetched"],
+        result["processed"],
+        result["skipped"],
+        result["failed"]
+    )
 
 
 if __name__ == "__main__":

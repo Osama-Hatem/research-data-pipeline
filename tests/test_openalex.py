@@ -1,45 +1,42 @@
 import requests
 
-import pytest
-
 from api.openalex import get_papers
 
 
-def test_get_papers_retries_after_timeout(
+def test_get_papers_returns_results(
     monkeypatch
 ):
 
-    attempts = 0
+    class FakeResponse:
+
+        def raise_for_status(
+            self
+        ):
+
+            pass
+
+
+        def json(
+            self
+        ):
+
+            return {
+
+                "results": [
+
+                    {
+                        "id": "W123"
+                    }
+
+                ]
+
+            }
 
 
     def fake_get(
         *args,
         **kwargs
     ):
-
-        nonlocal attempts
-
-        attempts += 1
-
-
-        if attempts < 3:
-
-            raise requests.Timeout()
-
-
-        class FakeResponse:
-
-            def raise_for_status(self):
-
-                pass
-
-
-            def json(self):
-
-                return {
-                    "results": []
-                }
-
 
         return FakeResponse()
 
@@ -56,16 +53,36 @@ def test_get_papers_retries_after_timeout(
     )
 
 
-    assert result == []
+    assert result == [
 
-    assert attempts == 3
+        {
+            "id": "W123"
+        }
+
+    ]
 
 
 def test_get_papers_does_not_retry_bad_request(
     monkeypatch
 ):
 
-    attempts = 0
+    attempts = []
+
+
+    class FakeResponse:
+
+        def raise_for_status(
+            self
+        ):
+
+            response = requests.Response()
+
+            response.status_code = 400
+
+
+            raise requests.HTTPError(
+                response=response
+            )
 
 
     def fake_get(
@@ -73,23 +90,12 @@ def test_get_papers_does_not_retry_bad_request(
         **kwargs
     ):
 
-        nonlocal attempts
-
-        attempts += 1
-
-
-        response = requests.Response()
-
-
-        response.status_code = 400
-
-
-        response.url = (
-            "https://api.openalex.org/works"
+        attempts.append(
+            1
         )
 
 
-        return response
+        return FakeResponse()
 
 
     monkeypatch.setattr(
@@ -105,9 +111,219 @@ def test_get_papers_does_not_retry_bad_request(
             "engineering"
         )
 
+
     except requests.HTTPError:
 
         pass
 
 
-    assert attempts == 1
+    else:
+
+        raise AssertionError(
+            "Expected HTTPError"
+        )
+
+
+    assert len(attempts) == 1
+
+
+def test_get_papers_retries_server_error(
+    monkeypatch
+):
+
+    attempts = []
+
+
+    class FakeResponse:
+
+        def raise_for_status(
+            self
+        ):
+
+            response = requests.Response()
+
+            response.status_code = 500
+
+
+            raise requests.HTTPError(
+                response=response
+            )
+
+
+    def fake_get(
+        *args,
+        **kwargs
+    ):
+
+        attempts.append(
+            1
+        )
+
+
+        return FakeResponse()
+
+
+    def fake_sleep(
+        delay
+    ):
+
+        pass
+
+
+    monkeypatch.setattr(
+        requests,
+        "get",
+        fake_get
+    )
+
+
+    monkeypatch.setattr(
+        "api.openalex.time.sleep",
+        fake_sleep
+    )
+
+
+    try:
+
+        get_papers(
+            "engineering"
+        )
+
+
+    except requests.HTTPError:
+
+        pass
+
+
+    else:
+
+        raise AssertionError(
+            "Expected HTTPError"
+        )
+
+
+    assert len(attempts) == 3
+
+
+def test_get_papers_retries_timeout(
+    monkeypatch
+):
+
+    attempts = []
+
+
+    def fake_get(
+        *args,
+        **kwargs
+    ):
+
+        attempts.append(
+            1
+        )
+
+
+        raise requests.Timeout()
+
+
+    def fake_sleep(
+        delay
+    ):
+
+        pass
+
+
+    monkeypatch.setattr(
+        requests,
+        "get",
+        fake_get
+    )
+
+
+    monkeypatch.setattr(
+        "api.openalex.time.sleep",
+        fake_sleep
+    )
+
+
+    try:
+
+        get_papers(
+            "engineering"
+        )
+
+
+    except requests.Timeout:
+
+        pass
+
+
+    else:
+
+        raise AssertionError(
+            "Expected Timeout"
+        )
+
+
+    assert len(attempts) == 3
+
+
+def test_get_papers_retries_connection_error(
+    monkeypatch
+):
+
+    attempts = []
+
+
+    def fake_get(
+        *args,
+        **kwargs
+    ):
+
+        attempts.append(
+            1
+        )
+
+
+        raise requests.ConnectionError()
+
+
+    def fake_sleep(
+        delay
+    ):
+
+        pass
+
+
+    monkeypatch.setattr(
+        requests,
+        "get",
+        fake_get
+    )
+
+
+    monkeypatch.setattr(
+        "api.openalex.time.sleep",
+        fake_sleep
+    )
+
+
+    try:
+
+        get_papers(
+            "engineering"
+        )
+
+
+    except requests.ConnectionError:
+
+        pass
+
+
+    else:
+
+        raise AssertionError(
+            "Expected ConnectionError"
+        )
+
+
+    assert len(attempts) == 3

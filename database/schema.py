@@ -63,5 +63,39 @@ def create_tables(connection):
         )
     """)
 
+    cursor.execute(
+    """
+    CREATE INDEX IF NOT EXISTS
+    idx_papers_title
+    ON papers(title)
+    """
+    )
+
+
+    cursor.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_papers_search_query
+        ON papers(search_query)
+        """
+    )
+
+
+    cursor.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_papers_citations
+        ON papers(citations)
+        """
+    )
+
+
+    cursor.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_authors_name
+        ON authors(name)
+        """
+    )
 
     connection.commit()

@@ -1,17 +1,21 @@
 import sqlite3
 
+from config.settings import (
+    DATABASE_PATH
+)
 
-DATABASE_PATH = "research.db"
+
+def get_connection(
+    database_path=None
+):
+
+    if database_path is None:
+
+        database_path = (
+            DATABASE_PATH
+        )
 
 
-def get_connection(database_path=DATABASE_PATH):
-
-    connection = sqlite3.connect(
+    return sqlite3.connect(
         database_path
     )
-
-    connection.execute(
-        "PRAGMA foreign_keys = ON"
-    )
-
-    return connection

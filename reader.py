@@ -5,6 +5,55 @@ from database.reader import (
     search_papers,
     get_authors_for_paper
 )
+from config.settings import (
+    DEFAULT_SEARCH_LIMIT
+)
+
+
+def search_and_print(
+    search_term,
+    limit=DEFAULT_SEARCH_LIMIT,
+    sort_by="citations"
+):
+
+    connection = get_connection()
+
+
+    try:
+
+        papers = search_papers(
+            connection,
+            search_term,
+            limit,
+            sort_by
+        )
+
+
+        if not papers:
+
+            print(
+                "No papers found."
+            )
+
+            return
+
+
+        print(
+            f"Found {len(papers)} paper(s)"
+        )
+
+
+        for paper in papers:
+
+            print_paper(
+                connection,
+                paper
+            )
+
+
+    finally:
+
+        connection.close()
 
 
 def print_paper(
@@ -102,6 +151,7 @@ def print_paper(
         "--------------------"
     )
 
+
 def positive_integer(
     value
 ):
@@ -119,6 +169,7 @@ def positive_integer(
 
 
     return value
+
 
 def create_parser():
 
@@ -143,10 +194,11 @@ def create_parser():
     parser.add_argument(
         "--limit",
         type=positive_integer,
-        default=10,
+        default=DEFAULT_SEARCH_LIMIT,
         help=(
             "Maximum number of papers "
-            "to display (default: 10)"
+            "to display "
+            f"(default: {DEFAULT_SEARCH_LIMIT})"
         )
     )
 
@@ -183,44 +235,11 @@ def main():
     )
 
 
-    connection = get_connection()
-
-
-    try:
-
-        papers = search_papers(
-        connection,
+    search_and_print(
         search_term,
         args.limit,
         args.sort
-        )
-
-
-        if not papers:
-
-            print(
-                "No papers found."
-            )
-
-            return
-
-
-        print(
-            f"Found {len(papers)} paper(s)"
-        )
-
-
-        for paper in papers:
-
-            print_paper(
-                connection,
-                paper
-            )
-
-
-    finally:
-
-        connection.close()
+    )
 
 
 if __name__ == "__main__":
