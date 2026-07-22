@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Statistics — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header">
+
+    <div class="eyebrow">
+        DATABASE STATISTICS
+    </div>
+
+    <h1>
+        Your collection at a glance.
+    </h1>
+
+</section>
+
+
+<section class="stats-grid">
+
+    <div class="stat-card">
+        <span class="stat-label">PAPERS</span>
+        <strong>{{ statistics.paper_count }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">AUTHORS</span>
+        <strong>{{ statistics.author_count }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">CITATIONS</span>
+        <strong>{{ statistics.citation_count }}</strong>
+    </div>
+
+</section>
+
+{% endblock %}

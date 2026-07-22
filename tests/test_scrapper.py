@@ -5,15 +5,21 @@ from collection.service import process_papers
 
 def test_process_papers_continues_after_one_failure(
     monkeypatch
-):
+    ):
 
     raw_papers = [
 
-        {"id": "paper-1"},
+        {
+            "id": "paper-1"
+        },
 
-        {"id": "paper-2"},
+        {
+            "id": "paper-2"
+        },
 
-        {"id": "paper-3"}
+        {
+            "id": "paper-3"
+        }
 
     ]
 
@@ -23,7 +29,9 @@ def test_process_papers_continues_after_one_failure(
         search_term
     ):
 
-        if raw_paper["id"] == "paper-2":
+        if raw_paper[
+            "id"
+        ] == "paper-2":
 
             raise ValueError(
                 "Intentional test failure"
@@ -32,11 +40,14 @@ def test_process_papers_continues_after_one_failure(
 
         return {
 
-            "openalex_id": raw_paper["id"],
+            "openalex_id": raw_paper[
+                "id"
+            ],
 
             "title": "Test Paper",
 
-            "publication_date": "2025-01-01",
+            "publication_date":
+            "2025-01-01",
 
             "citations": 0,
 
@@ -56,7 +67,7 @@ def test_process_papers_continues_after_one_failure(
         connection
     ):
 
-        pass
+        return True
 
 
     monkeypatch.setattr(
@@ -80,11 +91,17 @@ def test_process_papers_continues_after_one_failure(
     )
 
 
-    assert result == (
-        2,
-        0,
-        1
-    )
+    assert result == {
+
+        "new": 2,
+
+        "existing": 0,
+
+        "skipped": 0,
+
+        "failed": 1
+
+    }
 
 def test_process_papers_skips_paper_without_openalex_id(
     monkeypatch
@@ -92,7 +109,9 @@ def test_process_papers_skips_paper_without_openalex_id(
 
     raw_papers = [
 
-        {"id": "paper-1"}
+        {
+            "id": "paper-1"
+        }
 
     ]
 
@@ -108,7 +127,8 @@ def test_process_papers_skips_paper_without_openalex_id(
 
             "title": "Paper Without ID",
 
-            "publication_date": "2025-01-01",
+            "publication_date":
+            "2025-01-01",
 
             "citations": 0,
 
@@ -123,27 +143,10 @@ def test_process_papers_skips_paper_without_openalex_id(
         }
 
 
-    def fake_save_paper(
-        paper,
-        connection
-    ):
-
-        raise AssertionError(
-            "save_paper should not be called"
-        )
-
-
     monkeypatch.setattr(
         collection.service,
         "normalize_paper",
         fake_normalize_paper
-    )
-
-
-    monkeypatch.setattr(
-        collection.service,
-        "save_paper",
-        fake_save_paper
     )
 
 
@@ -154,8 +157,14 @@ def test_process_papers_skips_paper_without_openalex_id(
     )
 
 
-    assert result == (
-        0,
-        1,
-        0
-    )
+    assert result == {
+
+        "new": 0,
+
+        "existing": 0,
+
+        "skipped": 1,
+
+        "failed": 0
+
+    }

@@ -4,7 +4,9 @@ from processing.normalizer import normalize_paper
 from database.repository import save_paper
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(
+    __name__
+)
 
 
 def process_papers(
@@ -13,8 +15,12 @@ def process_papers(
     connection
 ):
 
-    processed_count = 0
+    new_count = 0
+
+    existing_count = 0
+
     skipped_count = 0
+
     failed_count = 0
 
 
@@ -28,10 +34,13 @@ def process_papers(
             )
 
 
-            if not normalized_paper["openalex_id"]:
+            if not normalized_paper[
+                "openalex_id"
+            ]:
 
                 logger.warning(
-                    "Skipping paper with missing OpenAlex ID"
+                    "Skipping paper with "
+                    "missing OpenAlex ID"
                 )
 
 
@@ -40,13 +49,19 @@ def process_papers(
                 continue
 
 
-            save_paper(
+            was_inserted = save_paper(
                 normalized_paper,
                 connection
             )
 
 
-            processed_count += 1
+            if was_inserted:
+
+                new_count += 1
+
+            else:
+
+                existing_count += 1
 
 
         except Exception:
@@ -62,8 +77,14 @@ def process_papers(
             continue
 
 
-    return (
-        processed_count,
-        skipped_count,
-        failed_count
-    )
+    return {
+
+        "new": new_count,
+
+        "existing": existing_count,
+
+        "skipped": skipped_count,
+
+        "failed": failed_count
+
+    }

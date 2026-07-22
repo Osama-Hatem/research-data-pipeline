@@ -12,8 +12,15 @@ from config.settings import (
 
 
 def get_papers(
-    search_term
+    search_term,
+    limit=None,
+    page=1
 ):
+
+    if limit is None:
+
+        limit = OPENALEX_PER_PAGE
+
 
     for attempt in range(
         OPENALEX_MAX_RETRIES
@@ -25,9 +32,8 @@ def get_papers(
                 OPENALEX_API_URL,
                 params={
                     "search": search_term,
-                    "per-page": (
-                        OPENALEX_PER_PAGE
-                    )
+                    "per-page": limit,
+                    "page": page
                 },
                 timeout=OPENALEX_TIMEOUT
             )

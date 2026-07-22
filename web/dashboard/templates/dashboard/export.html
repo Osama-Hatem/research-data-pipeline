@@ -1,0 +1,76 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Export — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header">
+
+    <div class="eyebrow">
+        DATA EXPORT
+    </div>
+
+    <h1>
+        Export your collection.
+    </h1>
+
+    <p class="hero-text">
+        Download your collected papers in CSV or JSON format.
+    </p>
+
+</section>
+
+
+<section class="form-card">
+
+    <form
+        method="post"
+    >
+
+        {% csrf_token %}
+
+        <label>
+            Format
+        </label>
+
+        <select
+            name="format"
+        >
+
+            <option value="csv">
+                CSV
+            </option>
+
+            <option value="json">
+                JSON
+            </option>
+
+        </select>
+
+
+        <label>
+            Filename
+        </label>
+
+        <input
+            type="text"
+            name="filename"
+            placeholder="papers.csv"
+        >
+
+
+        <button
+            type="submit"
+            class="button primary"
+        >
+            Export Collection
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

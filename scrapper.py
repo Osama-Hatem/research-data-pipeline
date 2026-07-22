@@ -11,11 +11,16 @@ from config.logging_config import configure_logging
 configure_logging()
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(
+    __name__
+)
 
 
 def collect_papers(
-    search_term
+    search_term,
+    limit=25,
+    target_new=None,
+    max_pages=100
 ):
 
     connection = get_connection()
@@ -28,33 +33,99 @@ def collect_papers(
         )
 
 
-        raw_papers = get_papers(
-            search_term
-        )
+        total_fetched = 0
+
+        total_new = 0
+
+        total_existing = 0
+
+        total_skipped = 0
+
+        total_failed = 0
+
+        page = 1
 
 
-        result = process_papers(
-            raw_papers,
-            search_term,
-            connection
-        )
+        while page <= max_pages:
+
+            raw_papers = get_papers(
+                search_term,
+                limit,
+                page
+            )
+
+
+            if not raw_papers:
+
+                break
+
+
+            total_fetched += len(
+                raw_papers
+            )
+
+
+            result = process_papers(
+                raw_papers,
+                search_term,
+                connection
+            )
+
+
+            total_new += result[
+                "new"
+            ]
+
+
+            total_existing += result[
+                "existing"
+            ]
+
+
+            total_skipped += result[
+                "skipped"
+            ]
+
+
+            total_failed += result[
+                "failed"
+            ]
+
+
+            if (
+
+                target_new is not None
+
+                and total_new >= target_new
+
+            ):
+
+                break
+
+
+            if len(
+                total_fetched
+            ) < limit:
+
+                break
+
+
+            page += 1
 
 
         return {
 
-            "fetched": len(raw_papers),
+            "fetched": total_fetched,
 
-            "processed": result[
-                0
-            ],
+            "new": total_new,
 
-            "skipped": result[
-                1
-            ],
+            "existing": total_existing,
 
-            "failed": result[
-                2
-            ]
+            "skipped": total_skipped,
+
+            "failed": total_failed,
+
+            "pages": page
 
         }
 
@@ -63,14 +134,16 @@ def collect_papers(
 
         connection.close()
 
-
 def main():
 
-    if len(sys.argv) < 2:
+    if len(
+        sys.argv
+    ) < 2:
 
         logger.error(
             "Usage: "
-            "python scrapper.py <search term>"
+            "python scrapper.py "
+            "<search term>"
         )
 
         return
@@ -88,11 +161,18 @@ def main():
 
     logger.info(
         "Collection complete: "
-        "fetched=%d processed=%d "
-        "skipped=%d failed=%d",
+        "fetched=%d new=%d "
+        "existing=%d skipped=%d "
+        "failed=%d",
+
         result["fetched"],
-        result["processed"],
+
+        result["new"],
+
+        result["existing"],
+
         result["skipped"],
+
         result["failed"]
     )
 

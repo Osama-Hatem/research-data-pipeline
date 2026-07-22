@@ -1,0 +1,97 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Authors — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header">
+
+    <div class="eyebrow">
+        AUTHOR SEARCH
+    </div>
+
+    <h1>
+        Find researchers.
+    </h1>
+
+    <form
+        action="{% url 'authors' %}"
+        method="get"
+        class="control-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_term }}"
+            placeholder="Search author names..."
+        >
+
+        <input
+            type="number"
+            name="limit"
+            value="{{ limit }}"
+            min="1"
+        >
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+</section>
+
+
+{% if search_term %}
+
+    <section class="results-list">
+
+        {% for author in authors %}
+
+            <article class="paper-card">
+
+                <div>
+
+                    <span class="paper-number">
+                        {{ forloop.counter|stringformat:"02d" }}
+                    </span>
+
+                    <h3>
+                        {{ author.2 }}
+                    </h3>
+
+                    <div class="paper-meta">
+                        <span>
+                            OpenAlex ID: {{ author.1 }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </article>
+
+        {% empty %}
+
+            <section class="empty-state">
+
+                <h2>
+                    No authors found
+                </h2>
+
+                <p>
+                    Try another search term.
+                </p>
+
+            </section>
+
+        {% endfor %}
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

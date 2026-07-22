@@ -1,0 +1,94 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+        Research AI
+        {% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'dashboard/style.css' %}"
+    >
+
+</head>
+
+<body>
+
+    <header class="navbar">
+
+        <a
+            href="{% url 'home' %}"
+            class="brand"
+        >
+
+            <span class="brand-mark">
+                ✦
+            </span>
+
+            <span>
+                Research AI
+            </span>
+
+        </a>
+
+
+        <nav class="nav-links">
+
+            <a href="{% url 'home' %}">
+                Dashboard
+            </a>
+
+            <a href="{% url 'search' %}">
+                Search
+            </a>
+
+            <a href="{% url 'collect' %}">
+                Collect
+            </a>
+
+            <a href="{% url 'export' %}">
+                Export
+            </a>
+
+        </nav>
+
+    </header>
+
+
+    <main class="page">
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+
+    <footer class="footer">
+
+        <span>
+            Research Paper Collector
+        </span>
+
+        <span>
+            Django interface for the existing application
+        </span>
+
+    </footer>
+
+</body>
+
+</html>

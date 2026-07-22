@@ -1,11 +1,10 @@
 from database.connection import get_connection
 from database.schema import create_tables
 from database.reader import (
-    search_papers,
-    get_authors_for_paper
+search_papers,
+get_authors_for_paper
 )
 from collection.service import process_papers
-
 
 def test_collection_pipeline_saves_paper_and_author():
 
@@ -71,17 +70,22 @@ def test_collection_pipeline_saves_paper_and_author():
 
 
     assert result[
-        0
+        "new"
     ] == 1
 
 
     assert result[
-        1
+        "existing"
     ] == 0
 
 
     assert result[
-        2
+        "skipped"
+    ] == 0
+
+
+    assert result[
+        "failed"
     ] == 0
 
 

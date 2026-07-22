@@ -66,46 +66,62 @@ def handle_top(
     )
 
 def handle_collect(
-    args
-):
+        args
+    ):
 
-    search_term = " ".join(
-        args.search_term
-    )
-
-
-    result = collect_papers(
-        search_term
-    )
+        search_term = " ".join(
+            args.search_term
+        )
 
 
-    print(
-        "Collection complete:"
-    )
+        result = collect_papers(
+            search_term,
+            limit=args.limit,
+            target_new=args.new
+        )
 
 
-    print(
-        f"Fetched: "
-        f"{result['fetched']}"
-    )
+        print()
+
+        print(
+            "Collection complete:"
+        )
 
 
-    print(
-        f"Processed: "
-        f"{result['processed']}"
-    )
+        print(
+            f"Fetched: "
+            f"{result['fetched']}"
+        )
 
 
-    print(
-        f"Skipped: "
-        f"{result['skipped']}"
-    )
+        print(
+            f"New: "
+            f"{result['new']}"
+        )
 
 
-    print(
-        f"Failed: "
-        f"{result['failed']}"
-    )
+        print(
+            f"Already existed: "
+            f"{result['existing']}"
+        )
+
+
+        print(
+            f"Skipped: "
+            f"{result['skipped']}"
+        )
+
+
+        print(
+            f"Failed: "
+            f"{result['failed']}"
+        )
+
+
+        print(
+            f"Pages searched: "
+            f"{result['pages']}"
+        )
 
 def handle_export(
     args
@@ -182,6 +198,25 @@ def create_parser():
         nargs="+",
         help=(
             "Search term used to collect papers"
+        )
+    )
+
+    collect_parser.add_argument(
+        "--limit",
+        type=positive_integer,
+        default=DEFAULT_SEARCH_LIMIT,
+        help=(
+            "Number of papers to fetch from OpenAlex"
+        )
+    )
+
+    collect_parser.add_argument(
+        "--new",
+        type=positive_integer,
+        default=None,
+        help=(
+            "Keep searching until this many "
+            "new papers are collected"
         )
     )
 

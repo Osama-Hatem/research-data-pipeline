@@ -55,59 +55,87 @@ def database_connection():
     
 
 def test_collect_command_calls_collect_papers(
-    monkeypatch
-):
-
-    received = {}
-
-
-    def fake_collect_papers(
-        search_term
+        monkeypatch
     ):
 
-        received[
+        received = {}
+
+
+        def fake_collect_papers(
+            search_term,
+            limit,
+            target_new=None
+        ):
+
+            received[
+                "search_term"
+            ] = search_term
+
+
+            received[
+                "limit"
+            ] = limit
+
+
+            received[
+                "target_new"
+            ] = target_new
+
+
+            return {
+
+                "fetched": 10,
+
+                "new": 8,
+
+                "existing": 1,
+
+                "skipped": 1,
+
+                "failed": 0,
+
+                "pages": 1
+
+            }
+
+
+        monkeypatch.setattr(
+            app,
+            "collect_papers",
+            fake_collect_papers
+        )
+
+
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "app.py",
+                "collect",
+                "machine",
+                "learning",
+                "--limit",
+                "25"
+            ]
+        )
+
+
+        app.main()
+
+
+        assert received[
             "search_term"
-        ] = search_term
+        ] == "machine learning"
 
 
-        return {
-
-            "fetched": 10,
-
-            "processed": 8,
-
-            "skipped": 1,
-
-            "failed": 1
-
-        }
+        assert received[
+            "limit"
+        ] == 25
 
 
-    monkeypatch.setattr(
-        app,
-        "collect_papers",
-        fake_collect_papers
-    )
-
-
-    monkeypatch.setattr(
-        "sys.argv",
-        [
-            "app.py",
-            "collect",
-            "machine",
-            "learning"
-        ]
-    )
-
-
-    app.main()
-
-
-    assert received[
-        "search_term"
-    ] == "machine learning"
-
+        assert received[
+            "target_new"
+        ] is None
+        
 def test_search_command_calls_search_and_print(
     monkeypatch
 ):
@@ -181,18 +209,24 @@ def test_collect_command_prints_summary(
 ):
 
     def fake_collect_papers(
-        search_term
+        search_term,
+        limit,
+        target_new=None
     ):
 
         return {
 
             "fetched": 25,
 
-            "processed": 20,
+            "new": 20,
+
+            "existing": 0,
 
             "skipped": 3,
 
-            "failed": 2
+            "failed": 2,
+
+            "pages": 1
 
         }
 
@@ -227,7 +261,13 @@ def test_collect_command_prints_summary(
 
 
     assert (
-        "Processed: 20"
+        "New: 20"
+        in output
+    )
+
+
+    assert (
+        "Already existed: 0"
         in output
     )
 
@@ -242,7 +282,7 @@ def test_collect_command_prints_summary(
         "Failed: 2"
         in output
     )
-
+    
 def test_export_parser_accepts_csv():
 
     parser = create_parser()

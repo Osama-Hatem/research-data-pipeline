@@ -1,0 +1,281 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Research AI — Dashboard
+{% endblock %}
+
+
+{% block content %}
+
+<section class="hero">
+
+    <div class="eyebrow">
+        RESEARCH COLLECTION
+    </div>
+
+    <h1>
+        Your research,
+        <span>simplified.</span>
+    </h1>
+
+    <p class="hero-text">
+
+        Collect, search, explore, and export
+        research papers through one interface.
+
+    </p>
+
+    <form
+        action="{% url 'search' %}"
+        method="get"
+        class="search-box"
+    >
+
+        <input
+            type="text"
+            name="q"
+            placeholder="Search papers or topics..."
+        >
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+</section>
+
+
+<section class="stats-grid">
+
+    <div class="stat-card">
+
+        <span class="stat-label">
+            PAPERS
+        </span>
+
+        <strong>
+            {{ statistics.paper_count }}
+        </strong>
+
+        <span class="stat-description">
+            collected research papers
+        </span>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <span class="stat-label">
+            AUTHORS
+        </span>
+
+        <strong>
+            {{ statistics.author_count }}
+        </strong>
+
+        <span class="stat-description">
+            unique researchers
+        </span>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <span class="stat-label">
+            CITATIONS
+        </span>
+
+        <strong>
+            {{ statistics.citation_count }}
+        </strong>
+
+        <span class="stat-description">
+            total citations
+        </span>
+
+    </div>
+
+</section>
+
+
+<section class="feature-grid">
+
+    <a
+        href="{% url 'search' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ⌕
+        </div>
+
+        <h3>
+            Search Papers
+        </h3>
+
+        <p>
+            Search your collected research by
+            title, author, or search query.
+        </p>
+
+        <span class="text-link">
+            Search collection →
+        </span>
+
+    </a>
+
+
+    <a
+        href="{% url 'collect' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ↓
+        </div>
+
+        <h3>
+            Collect Papers
+        </h3>
+
+        <p>
+            Run the existing OpenAlex collection
+            pipeline directly from the browser.
+        </p>
+
+        <span class="text-link">
+            Start collection →
+        </span>
+
+    </a>
+
+
+    <a
+        href="{% url 'statistics' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ◈
+        </div>
+
+        <h3>
+            Statistics
+        </h3>
+
+        <p>
+            View an overview of your research
+            database.
+        </p>
+
+        <span class="text-link">
+            View statistics →
+        </span>
+
+    </a>
+
+
+    <a
+        href="{% url 'recent' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ◷
+        </div>
+
+        <h3>
+            Recent Papers
+        </h3>
+
+        <p>
+            See the papers most recently added
+            to your collection.
+        </p>
+
+        <span class="text-link">
+            View recent papers →
+        </span>
+
+    </a>
+
+
+    <a
+        href="{% url 'authors' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ◎
+        </div>
+
+        <h3>
+            Search Authors
+        </h3>
+
+        <p>
+            Find researchers stored in your
+            collection.
+        </p>
+
+        <span class="text-link">
+            Search authors →
+        </span>
+
+    </a>
+
+
+    <a
+        href="{% url 'top' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ↑
+        </div>
+
+        <h3>
+            Top Cited
+        </h3>
+
+        <p>
+            View the most-cited papers in your
+            database.
+        </p>
+
+        <span class="text-link">
+            View top papers →
+        </span>
+
+    </a>
+
+
+    <a
+        href="{% url 'export' %}"
+        class="feature-card"
+    >
+
+        <div class="feature-icon">
+            ↗
+        </div>
+
+        <h3>
+            Export Data
+        </h3>
+
+        <p>
+            Export your collection to CSV or JSON.
+        </p>
+
+        <span class="text-link">
+            Export collection →
+        </span>
+
+    </a>
+
+</section>
+
+{% endblock %}

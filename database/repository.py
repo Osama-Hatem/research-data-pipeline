@@ -1,6 +1,10 @@
-def save_paper(paper, connection):
+def save_paper(
+    paper,
+    connection
+):
 
     cursor = connection.cursor()
+
 
     try:
 
@@ -29,13 +33,20 @@ def save_paper(paper, connection):
         )
 
 
+        was_inserted = (
+            cursor.rowcount == 1
+        )
+
+
         paper_row = cursor.execute(
             """
             SELECT id
             FROM papers
             WHERE openalex_id = ?
             """,
-            (paper["openalex_id"],),
+            (
+                paper["openalex_id"],
+            ),
         ).fetchone()
 
 
@@ -70,7 +81,9 @@ def save_paper(paper, connection):
                 FROM authors
                 WHERE openalex_id = ?
                 """,
-                (author["openalex_id"],),
+                (
+                    author["openalex_id"],
+                ),
             ).fetchone()
 
 
@@ -95,6 +108,9 @@ def save_paper(paper, connection):
 
 
         connection.commit()
+
+
+        return was_inserted
 
 
     except Exception:

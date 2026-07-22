@@ -1,0 +1,165 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Search — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header">
+
+    <div class="eyebrow">
+        SEARCH PAPERS
+    </div>
+
+    <h1>
+        Explore your collection.
+    </h1>
+
+    <form
+        action="{% url 'search' %}"
+        method="get"
+        class="control-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_term }}"
+            placeholder="Search papers..."
+        >
+
+        <input
+            type="number"
+            name="limit"
+            value="{{ limit }}"
+            min="1"
+            placeholder="Limit"
+        >
+
+        <select name="sort">
+
+            <option
+                value="citations"
+                {% if sort_by == "citations" %}
+                selected
+                {% endif %}
+            >
+                Citations
+            </option>
+
+            <option
+                value="date"
+                {% if sort_by == "date" %}
+                selected
+                {% endif %}
+            >
+                Date
+            </option>
+
+            <option
+                value="title"
+                {% if sort_by == "title" %}
+                selected
+                {% endif %}
+            >
+                Title
+            </option>
+
+        </select>
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+</section>
+
+
+{% if search_term %}
+
+    <div class="results-header">
+
+        <h2>
+            Results for "{{ search_term }}"
+        </h2>
+
+        <span>
+            {{ papers|length }} result{{ papers|length|pluralize }}
+        </span>
+
+    </div>
+
+
+    {% if papers %}
+
+        <section class="results-list">
+
+            {% for paper in papers %}
+
+                <article class="paper-card">
+
+                    <div>
+
+                        <span class="paper-number">
+                            {{ forloop.counter|stringformat:"02d" }}
+                        </span>
+
+                        <h3>
+
+                            <a
+                                href="{% url 'paper_detail' paper.0 %}"
+                            >
+                                {{ paper.2 }}
+                            </a>
+
+                        </h3>
+
+                        <div class="paper-meta">
+
+                            <span>
+                                {{ paper.3|default:"Date unavailable" }}
+                            </span>
+
+                            <span>
+                                {{ paper.4 }} citations
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <a
+                        href="{% url 'paper_detail' paper.0 %}"
+                        class="paper-arrow"
+                    >
+                        →
+                    </a>
+
+                </article>
+
+            {% endfor %}
+
+        </section>
+
+    {% else %}
+
+        <section class="empty-state">
+
+            <h2>
+                No papers found
+            </h2>
+
+            <p>
+                Try a different search term.
+            </p>
+
+        </section>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

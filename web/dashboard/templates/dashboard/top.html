@@ -1,0 +1,89 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Top Cited — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header">
+
+    <div class="eyebrow">
+        TOP CITED PAPERS
+    </div>
+
+    <h1>
+        The most-cited research.
+    </h1>
+
+    <form
+        method="get"
+        class="control-form"
+    >
+
+        <input
+            type="number"
+            name="limit"
+            value="{{ limit }}"
+            min="1"
+        >
+
+        <button type="submit">
+            Load Papers
+        </button>
+
+    </form>
+
+</section>
+
+
+<section class="results-list">
+
+    {% for paper in papers %}
+
+        <article class="paper-card">
+
+            <div>
+
+                <span class="paper-number">
+                    #{{ forloop.counter }}
+                </span>
+
+                <h3>
+
+                    <a
+                        href="{% url 'paper_detail' paper.0 %}"
+                    >
+                        {{ paper.2 }}
+                    </a>
+
+                </h3>
+
+                <div class="paper-meta">
+
+                    <span>
+                        {{ paper.4 }} citations
+                    </span>
+
+                    <span>
+                        {{ paper.3|default:"Date unavailable" }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </article>
+
+    {% empty %}
+
+        <section class="empty-state">
+            <h2>No papers found</h2>
+        </section>
+
+    {% endfor %}
+
+</section>
+
+{% endblock %}

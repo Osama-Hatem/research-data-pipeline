@@ -1,0 +1,95 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Collect — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header">
+
+    <div class="eyebrow">
+        OPENALEX COLLECTION
+    </div>
+
+    <h1>
+        Collect research papers.
+    </h1>
+
+    <p class="hero-text">
+        This runs your existing collection pipeline.
+    </p>
+
+</section>
+
+
+<section class="form-card">
+
+    <form
+        method="post"
+    >
+
+        {% csrf_token %}
+
+        <label>
+            Search term
+        </label>
+
+        <input
+            type="text"
+            name="search_term"
+            value="{{ search_term }}"
+            placeholder="machine learning"
+            required
+        >
+
+        <button
+            type="submit"
+            class="button primary"
+        >
+            Start Collection
+        </button>
+
+    </form>
+
+</section>
+
+
+{% if result %}
+
+<section class="result-summary">
+
+    <h2>
+        Collection complete
+    </h2>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <span class="stat-label">FETCHED</span>
+            <strong>{{ result.fetched }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">PROCESSED</span>
+            <strong>{{ result.processed }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">SKIPPED</span>
+            <strong>{{ result.skipped }}</strong>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">FAILED</span>
+            <strong>{{ result.failed }}</strong>
+        </div>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+{% endblock %}

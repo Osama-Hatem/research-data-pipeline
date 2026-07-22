@@ -1,0 +1,160 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Paper — Research AI
+{% endblock %}
+
+
+{% block content %}
+
+{% if paper %}
+
+    <a
+        href="javascript:history.back()"
+        class="back-link"
+    >
+        ← Back
+    </a>
+
+
+    <article class="detail-card">
+
+        <div class="eyebrow">
+            RESEARCH PAPER
+        </div>
+
+        <h1>
+            {{ paper.2 }}
+        </h1>
+
+
+        <div class="detail-grid">
+
+            <div class="detail-item">
+
+                <span>
+                    DATE
+                </span>
+
+                <strong>
+                    {{ paper.3|default:"Unavailable" }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    CITATIONS
+                </span>
+
+                <strong>
+                    {{ paper.4 }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    OPENALEX ID
+                </span>
+
+                <strong>
+                    {{ paper.1 }}
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    SEARCH QUERY
+                </span>
+
+                <strong>
+                    {{ paper.7 }}
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <section class="authors-section">
+
+            <h2>
+                Authors
+            </h2>
+
+
+            <div class="author-list">
+
+                {% for author in authors %}
+
+                    <span class="author-chip">
+                        {{ author.0 }}
+                    </span>
+
+                {% empty %}
+
+                    <p class="muted">
+                        No authors found.
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+        <div class="detail-actions">
+
+            {% if paper.5 %}
+
+                <a
+                    href="{{ paper.5 }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="button secondary"
+                >
+                    Open DOI
+                </a>
+
+            {% endif %}
+
+
+            {% if paper.6 %}
+
+                <a
+                    href="{{ paper.6 }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="button primary"
+                >
+                    Open Paper
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </article>
+
+{% else %}
+
+    <section class="empty-state">
+
+        <h2>
+            Paper not found
+        </h2>
+
+    </section>
+
+{% endif %}
+
+{% endblock %}
