@@ -1,11 +1,14 @@
 from django.http import FileResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 
 from database.connection import get_connection
 from database.reader import (
     search_papers,
     search_authors,
     get_authors_for_paper,
+    get_database_statistics,
+    get_recent_papers,
+    get_top_cited_papers,
 )
 from database.exporter import (
     export_papers_to_csv,
@@ -14,28 +17,21 @@ from database.exporter import (
 from scrapper import collect_papers
 
 
-def get_statistics(connection):
+def parse_positive_integer(
+    value,
+    default=10,
+):
+    try:
+        value = int(value)
 
-    paper_count = connection.execute(
-        "SELECT COUNT(*) FROM papers"
-    ).fetchone()[0]
+        if value <= 0:
+            return default
 
-    author_count = connection.execute(
-        "SELECT COUNT(*) FROM authors"
-    ).fetchone()[0]
+        return value
 
-    citation_count = connection.execute(
-        """
-        SELECT COALESCE(SUM(citations), 0)
-        FROM papers
-        """
-    ).fetchone()[0]
+    except (TypeError, ValueError):
 
-    return {
-        "paper_count": paper_count,
-        "author_count": author_count,
-        "citation_count": citation_count,
-    }
+        return default
 
 
 def home(request):
@@ -44,7 +40,9 @@ def home(request):
 
     try:
 
-        statistics = get_statistics(connection)
+        statistics = get_database_statistics(
+            connection
+        )
 
         return render(
             request,
@@ -66,9 +64,11 @@ def search(request):
         "",
     ).strip()
 
-    limit = request.GET.get(
-        "limit",
-        "10",
+    limit = parse_positive_integer(
+        request.GET.get(
+            "limit",
+            "10",
+        )
     )
 
     sort_by = request.GET.get(
@@ -79,17 +79,6 @@ def search(request):
     papers = []
 
     if search_term:
-
-        try:
-
-            limit = int(limit)
-
-            if limit <= 0:
-                limit = 10
-
-        except ValueError:
-
-            limit = 10
 
         connection = get_connection()
 
@@ -122,6 +111,10 @@ def collect(request):
 
     result = None
     search_term = ""
+    limit = 25
+    target_new = ""
+
+    error = None
 
     if request.method == "POST":
 
@@ -130,11 +123,49 @@ def collect(request):
             "",
         ).strip()
 
-        if search_term:
+        limit = parse_positive_integer(
+            request.POST.get(
+                "limit",
+                "25",
+            ),
+            default=25,
+        )
 
-            result = collect_papers(
-                search_term
+        target_new = request.POST.get(
+            "new",
+            "",
+        ).strip()
+
+        if target_new:
+
+            target_new = parse_positive_integer(
+                target_new,
+                default=1,
             )
+
+        else:
+
+            target_new = None
+
+        if not search_term:
+
+            error = "Please enter a search term."
+
+        else:
+
+            try:
+
+                result = collect_papers(
+                    search_term,
+                    limit=limit,
+                    target_new=target_new,
+                )
+
+            except Exception as exception:
+
+                error = str(
+                    exception
+                )
 
     return render(
         request,
@@ -142,6 +173,9 @@ def collect(request):
         {
             "result": result,
             "search_term": search_term,
+            "limit": limit,
+            "target_new": target_new,
+            "error": error,
         },
     )
 
@@ -152,7 +186,7 @@ def statistics(request):
 
     try:
 
-        stats = get_statistics(
+        stats = get_database_statistics(
             connection
         )
 
@@ -171,44 +205,21 @@ def statistics(request):
 
 def recent(request):
 
-    limit = request.GET.get(
-        "limit",
-        "10",
+    limit = parse_positive_integer(
+        request.GET.get(
+            "limit",
+            "10",
+        )
     )
-
-    try:
-
-        limit = int(limit)
-
-        if limit <= 0:
-            limit = 10
-
-    except ValueError:
-
-        limit = 10
 
     connection = get_connection()
 
     try:
 
-        papers = connection.execute(
-            """
-            SELECT
-                id,
-                openalex_id,
-                title,
-                publication_date,
-                citations,
-                doi,
-                primary_url,
-                search_query,
-                collected_at
-            FROM papers
-            ORDER BY collected_at DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        papers = get_recent_papers(
+            connection,
+            limit,
+        )
 
         return render(
             request,
@@ -231,21 +242,12 @@ def authors(request):
         "",
     ).strip()
 
-    limit = request.GET.get(
-        "limit",
-        "10",
+    limit = parse_positive_integer(
+        request.GET.get(
+            "limit",
+            "10",
+        )
     )
-
-    try:
-
-        limit = int(limit)
-
-        if limit <= 0:
-            limit = 10
-
-    except ValueError:
-
-        limit = 10
 
     results = []
 
@@ -278,44 +280,21 @@ def authors(request):
 
 def top(request):
 
-    limit = request.GET.get(
-        "limit",
-        "10",
+    limit = parse_positive_integer(
+        request.GET.get(
+            "limit",
+            "10",
+        )
     )
-
-    try:
-
-        limit = int(limit)
-
-        if limit <= 0:
-            limit = 10
-
-    except ValueError:
-
-        limit = 10
 
     connection = get_connection()
 
     try:
 
-        papers = connection.execute(
-            """
-            SELECT
-                id,
-                openalex_id,
-                title,
-                publication_date,
-                citations,
-                doi,
-                primary_url,
-                search_query,
-                collected_at
-            FROM papers
-            ORDER BY citations DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        papers = get_top_cited_papers(
+            connection,
+            limit,
+        )
 
         return render(
             request,
@@ -353,9 +332,13 @@ def export_data(request):
     if export_format == "json":
 
         if not filename:
+
             filename = "papers.json"
 
-        if not filename.endswith(".json"):
+        if not filename.endswith(
+            ".json"
+        ):
+
             filename += ".json"
 
     else:
@@ -363,9 +346,13 @@ def export_data(request):
         export_format = "csv"
 
         if not filename:
+
             filename = "papers.csv"
 
-        if not filename.endswith(".csv"):
+        if not filename.endswith(
+            ".csv"
+        ):
+
             filename += ".csv"
 
     connection = get_connection()
@@ -390,16 +377,20 @@ def export_data(request):
 
         connection.close()
 
-    response = FileResponse(
-        open(filename, "rb"),
+    return FileResponse(
+        open(
+            filename,
+            "rb",
+        ),
         as_attachment=True,
         filename=filename,
     )
 
-    return response
 
-
-def paper_detail(request, paper_id):
+def paper_detail(
+    request,
+    paper_id,
+):
 
     connection = get_connection()
 
@@ -420,7 +411,9 @@ def paper_detail(request, paper_id):
             FROM papers
             WHERE id = ?
             """,
-            (paper_id,),
+            (
+                paper_id,
+            ),
         ).fetchone()
 
         if paper is None:

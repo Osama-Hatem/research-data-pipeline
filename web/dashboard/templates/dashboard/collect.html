@@ -18,7 +18,8 @@ Collect — Research AI
     </h1>
 
     <p class="hero-text">
-        This runs your existing collection pipeline.
+        Use the same collection pipeline as the CLI,
+        with control over batch size and new papers.
     </p>
 
 </section>
@@ -44,6 +45,47 @@ Collect — Research AI
             required
         >
 
+
+        <label>
+            Papers per request
+        </label>
+
+        <input
+            type="number"
+            name="limit"
+            value="{{ limit }}"
+            min="1"
+            required
+        >
+
+        <p class="muted">
+            This controls how many papers are requested
+            from OpenAlex per page.
+        </p>
+
+
+        <label>
+            Target number of new papers
+            <span class="muted">
+                (optional)
+            </span>
+        </label>
+
+        <input
+            type="number"
+            name="new"
+            value="{{ target_new|default_if_none:'' }}"
+            min="1"
+            placeholder="Leave empty to collect one page"
+        >
+
+        <p class="muted">
+            If provided, the pipeline keeps searching
+            until it finds this many papers that are
+            not already in your database.
+        </p>
+
+
         <button
             type="submit"
             class="button primary"
@@ -54,6 +96,23 @@ Collect — Research AI
     </form>
 
 </section>
+
+
+{% if error %}
+
+<section class="empty-state">
+
+    <h2>
+        Collection failed
+    </h2>
+
+    <p>
+        {{ error }}
+    </p>
+
+</section>
+
+{% endif %}
 
 
 {% if result %}
@@ -67,23 +126,68 @@ Collect — Research AI
     <div class="stats-grid">
 
         <div class="stat-card">
-            <span class="stat-label">FETCHED</span>
-            <strong>{{ result.fetched }}</strong>
+            <span class="stat-label">
+                FETCHED
+            </span>
+
+            <strong>
+                {{ result.fetched }}
+            </strong>
         </div>
 
-        <div class="stat-card">
-            <span class="stat-label">PROCESSED</span>
-            <strong>{{ result.processed }}</strong>
-        </div>
 
         <div class="stat-card">
-            <span class="stat-label">SKIPPED</span>
-            <strong>{{ result.skipped }}</strong>
+            <span class="stat-label">
+                NEW
+            </span>
+
+            <strong>
+                {{ result.new }}
+            </strong>
         </div>
 
+
         <div class="stat-card">
-            <span class="stat-label">FAILED</span>
-            <strong>{{ result.failed }}</strong>
+            <span class="stat-label">
+                ALREADY EXISTED
+            </span>
+
+            <strong>
+                {{ result.existing }}
+            </strong>
+        </div>
+
+
+        <div class="stat-card">
+            <span class="stat-label">
+                SKIPPED
+            </span>
+
+            <strong>
+                {{ result.skipped }}
+            </strong>
+        </div>
+
+
+        <div class="stat-card">
+            <span class="stat-label">
+                FAILED
+            </span>
+
+            <strong>
+                {{ result.failed }}
+            </strong>
+        </div>
+
+
+        <div class="stat-card">
+            <span class="stat-label">
+                PAGES SEARCHED
+            </span>
+
+            <strong>
+                {{ result.pages }}
+            </strong>
         </div>
 
     </div>

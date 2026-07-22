@@ -17,122 +17,143 @@ logger = logging.getLogger(
 
 
 def collect_papers(
-    search_term,
-    limit=25,
-    target_new=None,
-    max_pages=100
-):
+        search_term,
+        limit=None,
+        target_new=None,
+        batch_size=25,
+        max_pages=100
+    ):
 
-    connection = get_connection()
+        connection = get_connection()
 
+        try:
 
-    try:
-
-        create_tables(
-            connection
-        )
-
-
-        total_fetched = 0
-
-        total_new = 0
-
-        total_existing = 0
-
-        total_skipped = 0
-
-        total_failed = 0
-
-        page = 1
-
-
-        while page <= max_pages:
-
-            raw_papers = get_papers(
-                search_term,
-                limit,
-                page
-            )
-
-
-            if not raw_papers:
-
-                break
-
-
-            total_fetched += len(
-                raw_papers
-            )
-
-
-            result = process_papers(
-                raw_papers,
-                search_term,
+            create_tables(
                 connection
             )
 
+            total_fetched = 0
+            total_new = 0
+            total_existing = 0
+            total_skipped = 0
+            total_failed = 0
 
-            total_new += result[
-                "new"
-            ]
+            page = 1
 
+            while page <= max_pages:
 
-            total_existing += result[
-                "existing"
-            ]
+                # If --limit was provided, calculate how many
+                # papers are still allowed to be fetched.
+                if limit is not None:
 
+                    remaining = (
+                        limit
+                        - total_fetched
+                    )
 
-            total_skipped += result[
-                "skipped"
-            ]
+                    if remaining <= 0:
 
+                        break
 
-            total_failed += result[
-                "failed"
-            ]
+                    current_batch_size = min(
+                        batch_size,
+                        remaining
+                    )
 
+                else:
 
-            if (
-
-                target_new is not None
-
-                and total_new >= target_new
-
-            ):
-
-                break
-
-
-            if len(
-                total_fetched
-            ) < limit:
-
-                break
+                    current_batch_size = batch_size
 
 
-            page += 1
+                raw_papers = get_papers(
+                    search_term,
+                    current_batch_size,
+                    page
+                )
 
 
-        return {
+                if not raw_papers:
 
-            "fetched": total_fetched,
-
-            "new": total_new,
-
-            "existing": total_existing,
-
-            "skipped": total_skipped,
-
-            "failed": total_failed,
-
-            "pages": page
-
-        }
+                    break
 
 
-    finally:
+                total_fetched += len(
+                    raw_papers
+                )
 
-        connection.close()
+
+                result = process_papers(
+                    raw_papers,
+                    search_term,
+                    connection
+                )
+
+
+                total_new += result[
+                    "new"
+                ]
+
+
+                total_existing += result[
+                    "existing"
+                ]
+
+
+                total_skipped += result[
+                    "skipped"
+                ]
+
+
+                total_failed += result[
+                    "failed"
+                ]
+
+
+                # Stop once the target number of
+                # genuinely new papers is reached.
+                if (
+
+                    target_new is not None
+
+                    and total_new >= target_new
+
+                ):
+
+                    break
+
+
+                # If the API returned fewer papers than
+                # requested, there are no more results.
+                if len(
+                    raw_papers
+                ) < current_batch_size:
+
+                    break
+
+
+                page += 1
+
+
+            return {
+
+                "fetched": total_fetched,
+
+                "new": total_new,
+
+                "existing": total_existing,
+
+                "skipped": total_skipped,
+
+                "failed": total_failed,
+
+                "pages": page
+
+            }
+
+
+        finally:
+
+            connection.close()
 
 def main():
 
